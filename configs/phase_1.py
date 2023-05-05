@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = 'default_runtime.py'
 
 experiment_name = 'realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
 work_dir = f'./work_dirs/{experiment_name}'
@@ -8,13 +8,12 @@ scale = 4
 
 # model settings
 model = dict(
-    type='RealBasicVSR',
+    type='Re_RealBasicVSR',
     generator=dict(
-        type='RealBasicVSRNet',
+        type='Re_RealBasicVSRNet',
         num_feat=64, 
         num_block=9, 
-        spynet_path='https://download.openmmlab.com/mmediting/restorers/'
-        'basicvsr/spynet_20210409-c6c1bd09.pth'),
+        spynet_path='./spynet.pth'),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     cleaning_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     is_use_sharpened_gt_in_pixel=True,
@@ -190,26 +189,6 @@ train_pipeline = [
     dict(type='PackInputs')
 ]
 
-val_pipeline = [
-    dict(
-        type='GenerateSegmentIndices',
-        interval_list=[1],
-        filename_tmpl='{:04d}.png'),
-    dict(type='LoadImageFromFile', key='img', channel_order='rgb'),
-    dict(type='LoadImageFromFile', key='gt', channel_order='rgb'),
-    dict(type='PackInputs')
-]
-
-test_pipeline = [
-    dict(
-        type='GenerateSegmentIndices',
-        interval_list=[1],
-        filename_tmpl='{:08d}.png'),
-    dict(type='LoadImageFromFile', key='gt', channel_order='rgb'),
-    dict(type='LoadImageFromFile', key='img', channel_order='rgb'),
-    dict(type='PackInputs')
-]
-
 demo_pipeline = [
     dict(type='GenerateSegmentIndices', interval_list=[1]),
     dict(type='LoadImageFromFile', key='img', channel_order='rgb'),
@@ -226,50 +205,14 @@ train_dataloader = dict(
     dataset=dict(
         type='BasicFramesDataset',
         metainfo=dict(dataset_type='reds', task_name='vsr'),
-        data_root=f'{data_root}/REDS/train',
-        data_prefix=dict(img='train_sharp_bicubic', gt='train_sharp'),
+        data_root="/content/drive/MyDrive/1THESIS/train",
+        data_prefix=dict(img='train_sharp_bicubic/X4', gt='train_sharp'),
         depth=1,
         num_input_frames=15,
         pipeline=train_pipeline))
 
-val_dataloader = dict(
-    num_workers=1,
-    batch_size=1,
-    persistent_workers=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type='BasicFramesDataset',
-        metainfo=dict(dataset_type='udm10', task_name='vsr'),
-        data_root=f'{data_root}/UDM10',
-        data_prefix=dict(img='BIx4', gt='GT'),
-        pipeline=val_pipeline))
-
-test_dataloader = dict(
-    num_workers=1,
-    batch_size=1,
-    persistent_workers=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type='BasicFramesDataset',
-        metainfo=dict(dataset_type='video_lq', task_name='vsr'),
-        data_root=f'{data_root}/VideoLQ',
-        data_prefix=dict(img='', gt=''),
-        pipeline=test_pipeline))
-
-val_evaluator = dict(
-    type='Evaluator', metrics=[
-        dict(type='PSNR'),
-        dict(type='SSIM'),
-    ])
-
-test_evaluator = dict(
-    type='Evaluator',
-    metrics=[dict(type='NIQE', input_order='CHW', convert_to='Y')])
-
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=300000, val_interval=310000)
-val_cfg = dict(type='MultiValLoop')
-test_cfg = dict(type='MultiTestLoop')
+    type='IterBasedTrainLoop', max_iters=300000)
 
 # optimizer
 optim_wrapper = dict(

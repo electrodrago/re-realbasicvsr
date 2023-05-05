@@ -10,13 +10,12 @@ scale = 4
 
 # model settings
 model = dict(
-    type='RealBasicVSR',
+    type='Re_RealBasicVSR',
     generator=dict(
-        type='RealBasicVSRNet',
+        type='Re_RealBasicVSRNet',
         num_feat=64, 
         num_block=9, 
-        spynet_path='https://download.openmmlab.com/mmediting/restorers/'
-        'basicvsr/spynet_20210409-c6c1bd09.pth'),
+        spynet_path='./spynet.pth'),
     discriminator=dict(
         type='UNetDiscriminatorWithSpectralNorm',
         in_channels=3,
