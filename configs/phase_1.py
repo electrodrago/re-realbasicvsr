@@ -230,8 +230,6 @@ default_hooks = dict(
         save_optimizer=True,
         out_dir=save_dir,
         max_keep_ckpts=100,
-        save_best='PSNR',
-        rule='greater',
         by_epoch=False),
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=10),
