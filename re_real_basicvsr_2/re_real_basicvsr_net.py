@@ -33,7 +33,7 @@ class Re_RealBasicVSRNet(BaseModule):
     """
     def __init__(self, 
                  mid_channels=64, 
-                 num_blocks=20,
+                 num_blocks=10,
                  keyframe_stride=5,
                  padding=2, 
                  spynet_pretrained=None,
@@ -80,6 +80,8 @@ class Re_RealBasicVSRNet(BaseModule):
             ResidualBlocksWithInputConv(3, mid_channels, 10),
             nn.Conv2d(mid_channels, 3, 3, 1, 1, bias=True),
         )
+
+        self.edvr.requires_grad_(False)
 
     def get_flow(self, x):
         """Get optical flow function for Re_RealBasicVSR.
@@ -182,7 +184,7 @@ class Re_RealBasicVSRNet(BaseModule):
 
         # compute optical flow and compute features for information-refill
         flows_forward = self.get_flow(lqs_clean)
-        feats_refill = self.compute_refill_features(lqs, keyframe_idx)
+        feats_refill = self.compute_refill_features(lqs_clean, keyframe_idx)
         
         # Input: shape(lqs): [b, 3, 64, 64]
         # Output: shape(feat): [b, 32, 64, 64]
@@ -195,7 +197,7 @@ class Re_RealBasicVSRNet(BaseModule):
         # feat: [b, 30, 64, 64, 64]
 
         outputs = []
-        feat_prop = lqs.new_zeros(n, self.mid_channels, h, w)
+        feat_prop = lqs.new_zeros(b, self.mid_channels, h, w)
         for i in range(0, n):
             out = feat[:, i, :, :, :]
             if i > 0:  # no warping for the first timestep
