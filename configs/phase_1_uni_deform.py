@@ -11,9 +11,12 @@ model = dict(
     type='Re_RealBasicVSR',
     generator=dict(
         type='Re_RealBasicVSRNet',
-        num_feat=64, 
-        num_block=9, 
-        spynet_path='./spynet.pth'),
+        mid_channels=64, 
+        num_blocks=20,
+        num_cleaning_blocks=10,
+        max_residue_magnitude=10,
+        spynet_pretrained='https://download.openmmlab.com/mmediting/restorers/'
+        'basicvsr/spynet_20210409-c6c1bd09.pth'),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     cleaning_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     is_use_sharpened_gt_in_pixel=True,
