@@ -199,7 +199,7 @@ class Re_RealBasicVSRNet(BaseModule):
         feat_clean = feat_clean.view(b, n, -1, h, w)
         feats = torch.cat([feat, feat_clean], dim=2)
         
-        feats = feats.view(-1, mid_channels, h, w)
+        feats = feats.view(-1, self.mid_channels, h, w)
         feats = self.attn_mixing(feats)
         feats = feats.view(b, n, -1, h, w)
         # feats: [b, 30, 64, 64, 64]
