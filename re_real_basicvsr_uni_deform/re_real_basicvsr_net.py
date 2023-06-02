@@ -33,9 +33,9 @@ class Re_RealBasicVSRNet(BaseModule):
             Default: None.
     """
     def __init__(self, 
-                 mid_channels=64, 
-                 num_blocks=20,
-                 num_cleaning_blocks=20,
+                 mid_channels=64,
+                 num_blocks=10,
+                 num_cleaning_blocks=10,
                  max_residue_magnitude=10,
                  spynet_pretrained=None):
         super().__init__()
@@ -45,6 +45,8 @@ class Re_RealBasicVSRNet(BaseModule):
         # Feature extraction module
         self.feat_extract = ResidualBlocksWithInputConv(3, mid_channels // 2, 5)
         self.feat_extract_clean = ResidualBlocksWithInputConv(3, mid_channels // 2, 5)
+
+        self.attn_mixing = LargeKernelAttn(mid_channels)
 
         # Alignment
         self.spynet = SPyNet(pretrained=spynet_pretrained)
@@ -196,7 +198,12 @@ class Re_RealBasicVSRNet(BaseModule):
         feat = feat.view(b, n, -1, h, w)
         feat_clean = feat_clean.view(b, n, -1, h, w)
         feats = torch.cat([feat, feat_clean], dim=2)
-        # feat: [b, 30, 64, 64, 64]
+        
+        feats = feats.view(-1, c, h, w)
+        feats = self.attn_mixing(feats)
+        feats = feats.view(b, n, -1, h, w)
+        # feats: [b, 30, 64, 64, 64]
+
 
         propagated = self.propagate(feats, flows_forward)
         outputs = []
@@ -519,3 +526,33 @@ class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
                                        self.stride, self.padding,
                                        self.dilation, self.groups,
                                        self.deform_groups)
+
+class LargeKernelAttn(nn.Module):
+    def __init__(self,
+                 channels):
+        super(LargeKernelAttn, self).__init__()
+        self.dwconv = nn.Conv2d(
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=5,
+            padding=2,
+            groups=channels
+        )
+        self.dwdconv = nn.Conv2d(
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=7,
+            padding=9,
+            groups=channels,
+            dilation=3
+        )
+        self.pwconv = nn.Conv2d(
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=1
+        )
+
+    def forward(self, x):
+        weight = self.pwconv(self.dwdconv(self.dwconv(x)))
+
+        return x * weight
