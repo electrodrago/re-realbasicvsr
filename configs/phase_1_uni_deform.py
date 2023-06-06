@@ -1,8 +1,8 @@
 _base_ = 'default_runtime.py'
 
 experiment_name = 'realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
-work_dir = f'./work_dirs/{experiment_name}'
-save_dir = './work_dirs/'
+work_dir = f'/content/drive/MyDrive/1THESIS/work_dirs/{experiment_name}'
+save_dir = '/content/drive/MyDrive/1THESIS/work_dirs/'
 
 scale = 4
 
@@ -201,8 +201,8 @@ demo_pipeline = [
 data_root = 'data'
 
 train_dataloader = dict(
-    num_workers=10,
-    batch_size=1,
+    num_workers=2,
+    batch_size=2,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
@@ -215,7 +215,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=300000)
+    type='IterBasedTrainLoop', max_iters=100000)
 
 # optimizer
 optim_wrapper = dict(
