@@ -305,7 +305,7 @@ class Re_RealBasicVSRNet(BaseModule):
             nn.Conv2d(mid_channels, 3, 3, 1, 1, bias=True),
         )
 
-        self.spynet.requires_grad_(True)
+        self.spynet.requires_grad_(False)
 
     def get_flow(self, x):
         """Get optical flow function for Re_RealBasicVSR.
