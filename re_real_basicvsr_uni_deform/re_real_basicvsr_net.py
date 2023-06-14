@@ -285,7 +285,7 @@ class Re_RealBasicVSRNet(BaseModule):
         self.propagation = ResidualBlocksWithInputConv(mid_channels * 2, mid_channels, num_blocks)
 
         # Reconstruction
-        self.fusion_attn = LargeKernelAttn(mid_channels)
+        self.aggr_attn = LargeKernelAttn(mid_channels)
 
         self.upsample1 = PixelShufflePack(
             mid_channels, mid_channels, 2, upsample_kernel=3)
@@ -430,8 +430,7 @@ class Re_RealBasicVSRNet(BaseModule):
 
         for i in range(0, n):
             out = propagated[i]
-            out = self.fusion_attn(out)
-            
+            out = self.lrelu(self.aggr_attn(out))
             out = self.lrelu(self.upsample1(out))
             out = self.lrelu(self.upsample2(out))
             out = self.lrelu(self.conv_hr(out))
