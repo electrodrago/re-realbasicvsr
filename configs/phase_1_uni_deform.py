@@ -12,11 +12,10 @@ model = dict(
     generator=dict(
         type='Re_RealBasicVSRNet',
         mid_channels=64, 
-        num_blocks=10,
+        num_blocks=20,
         num_cleaning_blocks=10,
         max_residue_magnitude=10,
-        spynet_pretrained='https://download.openmmlab.com/mmediting/restorers/'
-        'basicvsr/spynet_20210409-c6c1bd09.pth'),
+        spynet_pretrained='/content/re-realbasicvsr/spynet.pth'),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     cleaning_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     is_use_sharpened_gt_in_pixel=True,
@@ -201,7 +200,7 @@ demo_pipeline = [
 data_root = 'data'
 
 train_dataloader = dict(
-    num_workers=2,
+    num_workers=10,
     batch_size=2,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),

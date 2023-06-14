@@ -240,6 +240,7 @@ class BasicModule(nn.Module):
         return self.basic_module(tensor_input)
 
 
+@MODELS.register_module()
 class Re_RealBasicVSRNet(BaseModule):
     """Re_RealBasicVSR network structure for real-world video super-resolution.
 
