@@ -425,7 +425,6 @@ class Re_RealBasicVSRNet(BaseModule):
         feats = torch.cat([feat, feat_clean], dim=2)
         # feats: [b, 30, 64, 64, 64]
 
-
         propagated = self.propagate(feats, flows_forward)
         outputs = []
 
@@ -436,7 +435,7 @@ class Re_RealBasicVSRNet(BaseModule):
             out = self.lrelu(self.upsample2(out))
             out = self.lrelu(self.conv_hr(out))
             out = self.conv_last(out)
-            base = self.img_upsample(lqs[:, i, :, :, :])
+            base = self.img_upsample(lqs_clean[:, i, :, :, :])
             out += base
             outputs.append(out)
 
