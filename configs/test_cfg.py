@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = 'default_runtime.py'
 
 experiment_name = 'realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
 work_dir = f'./work_dirs/{experiment_name}'
@@ -49,8 +49,8 @@ test_dataloader = dict(
     dataset=dict(
         type='BasicFramesDataset',
         metainfo=dict(dataset_type='reds', task_name='vsr'),
-        data_root= '/content/Video_lq',
-        data_prefix=dict(img='/content/Video_lq', gt=''),
+        data_root= '/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4',
+        data_prefix=dict(img='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/LR', gt='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/HR'),
         pipeline=test_pipeline))
 
 
@@ -95,7 +95,7 @@ visualizer = dict(
     vis_backends=vis_backends,
     fn_key='gt_path',
     img_keys=['pred_img'],
-    bgr2rgb=False)
+    bgr2rgb=True)
 # VisualizationHook
 custom_hooks = [dict(type='BasicVisualizationHook', interval=1)]
 
