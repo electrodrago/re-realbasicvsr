@@ -1,8 +1,8 @@
 _base_ = 'default_runtime.py'
 
 experiment_name = 'realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
-work_dir = f'./work_dirs/{experiment_name}'
-save_dir = './work_dirs/'
+work_dir = f'/workspace/work_dirs/{experiment_name}'
+save_dir = '/workspace/work_dirs/'
 
 scale = 4
 
@@ -15,7 +15,7 @@ model = dict(
         num_blocks=20,
         num_cleaning_blocks=10,
         max_residue_magnitude=10,
-        spynet_pretrained='/content/re-realbasicvsr/spynet.pth'),
+        spynet_pretrained='/workspace/re-realbasicvsr/spynet.pth'),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     cleaning_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     is_use_sharpened_gt_in_pixel=True,
