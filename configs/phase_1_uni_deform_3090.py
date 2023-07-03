@@ -214,7 +214,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=300000)
+    type='IterBasedTrainLoop', max_iters=100000)
 
 # optimizer
 optim_wrapper = dict(
@@ -228,7 +228,7 @@ optim_wrapper = dict(
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
-        interval=5000,
+        interval=500,
         save_optimizer=True,
         out_dir=save_dir,
         max_keep_ckpts=100,
