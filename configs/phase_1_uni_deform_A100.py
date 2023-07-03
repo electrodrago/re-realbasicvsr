@@ -200,8 +200,8 @@ demo_pipeline = [
 data_root = 'data'
 
 train_dataloader = dict(
-    num_workers=10,
-    batch_size=2,
+    num_workers=12,
+    batch_size=8,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
@@ -210,7 +210,7 @@ train_dataloader = dict(
         data_root="/content/drive/MyDrive/1THESIS/train",
         data_prefix=dict(img='train_sharp_bicubic/X4', gt='train_sharp'),
         depth=1,
-        num_input_frames=15,
+        num_input_frames=10,
         pipeline=train_pipeline))
 
 train_cfg = dict(
