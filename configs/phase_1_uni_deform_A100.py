@@ -1,8 +1,8 @@
 _base_ = 'default_runtime.py'
 
-experiment_name = 'realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
-work_dir = f'/content/drive/MyDrive/1THESIS/work_dirs/{experiment_name}'
-save_dir = '/content/drive/MyDrive/1THESIS/work_dirs/'
+experiment_name = 're-realbasicvsr_wogan-c64b20-2x30x8_8xb2-lr1e-4-300k_reds'
+work_dir = f'/content/drive/MyDrive/1THESIS/work_dirs_official/{experiment_name}'
+save_dir = '/content/drive/MyDrive/1THESIS/work_dirs_official/'
 
 scale = 4
 
