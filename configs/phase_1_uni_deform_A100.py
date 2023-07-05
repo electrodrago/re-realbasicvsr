@@ -201,7 +201,7 @@ data_root = 'data'
 
 train_dataloader = dict(
     num_workers=12,
-    batch_size=6,
+    batch_size=4,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
