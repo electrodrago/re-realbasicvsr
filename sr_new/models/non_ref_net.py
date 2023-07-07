@@ -9,7 +9,7 @@ from .LKA import LKA
 
 
 @MODELS.register_module()
-class WithNo_REF(BaseModule):
+class NonRefNet(BaseModule):
     def __init__(self,
                  in_channels,
                  mid_channels=64,
@@ -18,7 +18,7 @@ class WithNo_REF(BaseModule):
         super().__init__()
 
 
-        self.sfe = FE(in_channels, mid_channels, num_blocks, res_scale)
+        self.fe = FE(in_channels, mid_channels, num_blocks, res_scale)
 
         self.res_block_sum = make_layer(
             ResidualBlockNoBN,

@@ -34,7 +34,7 @@ class SemanticGuideEnhance(BaseModule):
         feat_res = self.blocks(feat_res)
         feat_res = self.out_conv(feat_res)
 
-        return x + feat_res
+        return x + feat_res * 0.2
     
 
 class SemanticFusionUnit(BaseModule):
@@ -54,7 +54,7 @@ class SemanticFusionUnit(BaseModule):
     
 
 class GrowthAttentionResidualBlock(BaseModule):
-    """Attention Residual Dense Block.
+    """Growth Attention Residual Dense Block.
 
     Args:
         mid_channels (int): Channel number of intermediate features.

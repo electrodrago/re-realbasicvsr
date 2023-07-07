@@ -11,7 +11,7 @@ from mmagic.registry import MODELS
 
 
 @MODELS.register_module()
-class With_REF(BaseModule):
+class RefNet(BaseModule):
     def __init__(self,
                  in_channels,
                  mid_channels=64,
@@ -40,8 +40,18 @@ class With_REF(BaseModule):
             nn.LeakyReLU()
         )
 
+        self.LTE = LTE(requires_grad=True)
 
-    def forward(self, x, soft_attention, texture):
+        self.search_attn = SearchAttention()
+
+
+    def forward(self, x, ref_down_up, ref):
+        x = self.LTE(x)
+        ref_down_up = self.LTE(ref_down_up)
+        ref = self.LTE(ref)
+
+        soft_attention, texture = self.search_attn(x, ref_down_up, ref)
+
         # Out: [b, 64, h, w]
         feat = self.fe(x)
 
@@ -55,7 +65,7 @@ class With_REF(BaseModule):
         feat_res = self.res_block(feat)
         feat_res = self.conv_last(feat_res)
 
-        return x + feat_res
+        return x + feat_res * 0.2
 
 
 # Feature encoder module
@@ -100,8 +110,7 @@ class FE(BaseModule):
 class LTE(BaseModule):
     def __init__(self,
                  requires_grad=True,
-                 pixel_range=1.,
-                 load_pretrained_vgg=True):
+                 pixel_range=1.):
         super().__init__()
 
         vgg_mean = (0.485, 0.456, 0.406)
@@ -159,34 +168,6 @@ class SearchAttention(BaseModule):
         return outputs
 
     def forward(self, patch_lq_up, ref_down_up, ref):
-        """Texture transformer.
-
-        Q = LTE(img_lq)
-        K = LTE(ref_lq)
-        V = LTE(ref), from V_level_n to V_level_1
-
-        Relevance embedding aims to embed the relevance between the LQ and
-            Ref image by estimating the similarity between Q and K.
-        Hard-Attention: Only transfer features from the most relevant position
-            in V for each query.
-        Soft-Attention: synthesize features from the transferred GT texture
-            features T and the LQ features F from the backbone.
-
-        Args:
-            All args are features come from extractor (such as LTE).
-            img_lq_up (Tensor): Tensor of 4x bicubic-upsampled lq image.
-                (N, C, H, W)
-            ref_down_up (Tensor): Tensor of ref_lq. ref_lq is obtained
-                by applying bicubic down-sampling and up-sampling with factor
-                4x on ref. (N, C, H, W)
-            ref (Tensor): Ref tensor.(N, C, H, W)
-
-        Returns:
-            tuple: tuple contains:
-                soft_attention (Tensor): Soft-Attention tensor. (N, 1, H, W) \n
-                textures (Tensor): Transferred GT texture. (N, C, H, W)
-        """
-
         # query
         query = F.unfold(patch_lq_up, kernel_size=(3, 3), padding=1)
 
