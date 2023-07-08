@@ -1,24 +1,44 @@
 from typing import Dict, List
 
 import torch
+import torch.nn.functional as F
 from mmengine.optim import OptimWrapperDict
 
 from mmagic.models.utils import set_requires_grad
 from mmagic.registry import MODELS
-from mmagic.structures import DataSample
-from ..srgan import SRGAN
+from ..real_esrgan import RealESRGAN
 
 
 @MODELS.register_module()
-class SR_Anything(SRGAN):
+class SR_Anything(RealESRGAN):
     """
     Args:
         generator (dict): Config for the generator.
-        extractor (dict): Config for the extractor.
-        transformer (dict): Config for the transformer.
-        pixel_loss (dict): Config for the pixel loss.
-        perceptual_loss (dict): Config for the perceptual loss. Default: None.
-        train_cfg (dict): Config for train. Default: None.
+        discriminator (dict, optional): Config for the discriminator.
+            Default: None.
+        gan_loss (dict, optional): Config for the gan loss.
+            Note that the loss weight in gan loss is only for the generator.
+        pixel_loss (dict, optional): Config for the pixel loss. Default: None.
+        cleaning_loss (dict, optional): Config for the image cleaning loss.
+            Default: None.
+        perceptual_loss (dict, optional): Config for the perceptual loss.
+            Default: None.
+        is_use_sharpened_gt_in_pixel (bool, optional): Whether to use the image
+            sharpened by unsharp masking as the GT for pixel loss.
+            Default: False.
+        is_use_sharpened_gt_in_percep (bool, optional): Whether to use the
+            image sharpened by unsharp masking as the GT for perceptual loss.
+            Default: False.
+        is_use_sharpened_gt_in_gan (bool, optional): Whether to use the
+            image sharpened by unsharp masking as the GT for adversarial loss.
+            Default: False.
+        train_cfg (dict): Config for training. Default: None.
+            You may change the training of gan by setting:
+            `disc_steps`: how many discriminator updates after one generate
+            update;
+            `disc_init_steps`: how many discriminator updates at the start of
+            the training.
+            These two keys are useful when training with WGAN.
         test_cfg (dict): Config for testing. Default: None.
         init_cfg (dict, optional): The weight initialized config for
             :class:`BaseModule`. Default: None.
@@ -28,13 +48,15 @@ class SR_Anything(SRGAN):
 
     def __init__(self,
                  generator,
-                 extractor,
-                 transformer,
-                 pixel_loss,
                  discriminator=None,
-                 perceptual_loss=None,
-                 transferal_perceptual_loss=None,
                  gan_loss=None,
+                 pixel_loss=None,
+                 cleaning_loss=None,
+                 perceptual_loss=None,
+                 is_use_sharpened_gt_in_pixel=False,
+                 is_use_sharpened_gt_in_percep=False,
+                 is_use_sharpened_gt_in_gan=False,
+                 is_use_ema=False,
                  train_cfg=None,
                  test_cfg=None,
                  init_cfg=None,
@@ -46,147 +68,70 @@ class SR_Anything(SRGAN):
             gan_loss=gan_loss,
             pixel_loss=pixel_loss,
             perceptual_loss=perceptual_loss,
+            is_use_sharpened_gt_in_pixel=is_use_sharpened_gt_in_pixel,
+            is_use_sharpened_gt_in_percep=is_use_sharpened_gt_in_percep,
+            is_use_sharpened_gt_in_gan=is_use_sharpened_gt_in_gan,
+            is_use_ema=is_use_ema,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg,
             data_preprocessor=data_preprocessor)
 
-        self.transformer = MODELS.build(transformer)
-        self.extractor = MODELS.build(extractor)
-        extractor['requires_grad'] = False
-        self.extractor_copy = MODELS.build(extractor)
-        set_requires_grad(self.extractor_copy, False)
+        self.cleaning_loss = MODELS.build(
+            cleaning_loss) if cleaning_loss else None
 
-        if transferal_perceptual_loss:
-            self.transferal_perceptual_loss = MODELS.build(
-                transferal_perceptual_loss)
-        else:
-            self.transferal_perceptual_loss = None
-
-        self.pixel_init = train_cfg.get('pixel_init', 0) if train_cfg else 0
-
-    def forward_tensor(self, inputs, data_samples=None, training=False):
-        """Forward tensor. Returns result of simple forward.
+    def extract_gt_data(self, data_samples):
+        """extract gt data from data samples.
 
         Args:
-            inputs (torch.Tensor): batch input tensor collated by
-                :attr:`data_preprocessor`.
-            data_samples (List[BaseDataElement], optional):
-                data samples collated by :attr:`data_preprocessor`.
-            training (bool): Whether is training. Default: False.
+            data_samples (list): List of DataSample.
 
         Returns:
-            (Tensor | Tuple[List[Tensor]]): results of forward inference and
-                forward train.
+            Tensor: Extract gt data.
         """
 
-        img_lq = []
-        ref_lq = []
-        ref = []
+        gt_pixel, gt_percep, gt_gan = super().extract_gt_data(data_samples)
+        n, t, c, h, w = gt_pixel.size()
+        gt_pixel = gt_pixel.view(-1, c, h, w)
+        gt_percep = gt_percep.view(-1, c, h, w)
+        gt_gan = gt_gan.view(-1, c, h, w)
 
-        img_lq = data_samples.img_lq / 255.
-        ref_lq = data_samples.ref_lq / 255.
-        ref = data_samples.ref_img / 255.
-
-        img_lq, _, _ = self.extractor(img_lq)
-        ref_lq, _, _ = self.extractor(ref_lq)
-        refs = self.extractor(ref)
-
-        soft_attention, textures = self.transformer(img_lq, ref_lq, refs)
-
-        pred = self.generator(inputs, soft_attention, textures)
-
-        if training:
-            return pred, soft_attention, textures
+        if self.cleaning_loss:
+            gt_clean = gt_pixel.view(-1, c, h, w)
+            gt_clean = F.interpolate(
+                gt_clean,
+                scale_factor=0.25,
+                mode='area',
+                recompute_scale_factor=False)
+            gt_clean = gt_clean.view(n, t, c, h // 4, w // 4)
         else:
-            return pred
+            gt_clean = None
 
-    def if_run_g(self):
-        """Calculates whether need to run the generator step."""
+        return gt_pixel, gt_percep, gt_gan, gt_clean
 
-        return True
-
-    def if_run_d(self):
-        """Calculates whether need to run the discriminator step."""
-
-        return self.step_counter >= self.pixel_init and super().if_run_d()
-
-    def g_step(self, batch_outputs, batch_gt_data: DataSample):
+    def g_step(self, batch_outputs, batch_gt_data):
         """G step of GAN: Calculate losses of generator.
 
         Args:
             batch_outputs (Tensor): Batch output of generator.
-            batch_gt_data (Tensor): Batch GT data.
+            batch_gt_data (Tuple[Tensor]): Batch GT data.
 
         Returns:
             dict: Dict of losses.
         """
 
-        losses = dict()
-        pred, soft_attention, textures = batch_outputs
+        gt_pixel, gt_percep, gt_gan, gt_clean = batch_gt_data
+        fake_g_output, fake_g_lq = batch_outputs
+        fake_g_output = fake_g_output.view(gt_pixel.shape)
 
-        # pix loss
-        if self.pixel_loss:
-            losses['loss_pix'] = self.pixel_loss(pred, batch_gt_data)
+        losses = super().g_step(
+            batch_outputs=fake_g_output,
+            batch_gt_data=(gt_pixel, gt_percep, gt_gan))
 
-        if self.step_counter >= self.pixel_init:
-            # perceptual loss
-            if self.perceptual_loss:
-                loss_percep, loss_style = self.perceptual_loss(
-                    pred, batch_gt_data)
-                if loss_percep is not None:
-                    losses['loss_perceptual'] = loss_percep
-                if loss_style is not None:
-                    losses['loss_style'] = loss_style
-
-            # transform loss
-            if self.transferal_perceptual_loss:
-                state_dict = self.extractor.module.state_dict() if hasattr(
-                    self.extractor, 'module') else self.extractor.state_dict()
-                self.extractor_copy.load_state_dict(state_dict)
-                sr_textures = self.extractor_copy((pred + 1.) / 2.)
-                losses['loss_transferal'] = self.transferal_perceptual_loss(
-                    sr_textures, soft_attention, textures)
-
-            # gan loss for generator
-            if self.gan_loss and self.discriminator:
-                fake_g_pred = self.discriminator(pred)
-                losses['loss_gan'] = self.gan_loss(
-                    fake_g_pred, target_is_real=True, is_disc=False)
+        if self.cleaning_loss:
+            losses['loss_clean'] = self.cleaning_loss(fake_g_lq, gt_clean)
 
         return losses
-
-    def g_step_with_optim(self, batch_outputs: torch.Tensor,
-                          batch_gt_data: torch.Tensor,
-                          optim_wrapper: OptimWrapperDict):
-        """G step with optim of GAN: Calculate losses of generator and run
-        optim.
-
-        Args:
-            batch_outputs (Tensor): Batch output of generator.
-            batch_gt_data (Tensor): Batch GT data.
-            optim_wrapper (OptimWrapperDict): Optim wrapper dict.
-
-        Returns:
-            dict: Dict of parsed losses.
-        """
-
-        g_optim_wrapper = optim_wrapper['generator']
-        e_optim_wrapper = optim_wrapper['extractor']
-
-        losses_g = self.g_step(batch_outputs, batch_gt_data)
-        parsed_losses_g, log_vars_g = self.parse_losses(losses_g)
-
-        if g_optim_wrapper.should_update():
-            g_optim_wrapper.backward(parsed_losses_g)
-            g_optim_wrapper.step()
-            g_optim_wrapper.zero_grad()
-
-        if e_optim_wrapper.should_update():
-            e_optim_wrapper.step()
-            e_optim_wrapper.zero_grad()
-
-        return log_vars_g
 
     def train_step(self, data: List[dict],
                    optim_wrapper: OptimWrapperDict) -> Dict[str, torch.Tensor]:
@@ -226,13 +171,15 @@ class SR_Anything(SRGAN):
         if self.if_run_d():
             set_requires_grad(self.discriminator, True)
 
-            pred, _, _ = batch_outputs
+            gt_pixel, gt_percep, gt_gan, gt_clean = batch_gt_data
+            fake_g_output, fake_g_lq = batch_outputs
+            fake_g_output = fake_g_output.view(gt_pixel.shape)
 
             for _ in range(self.disc_repeat):
                 # detach before function call to resolve PyTorch2.0 compile bug
                 log_vars_d = self.d_step_with_optim(
-                    batch_outputs=pred.detach(),
-                    batch_gt_data=batch_gt_data,
+                    batch_outputs=fake_g_output.detach(),
+                    batch_gt_data=(gt_pixel, gt_percep, gt_gan),
                     optim_wrapper=optim_wrapper)
 
             log_vars.update(log_vars_d)
@@ -243,3 +190,20 @@ class SR_Anything(SRGAN):
         self.step_counter += 1
 
         return log_vars
+
+    def forward_train(self, batch_inputs, data_samples=None):
+        """Forward Train.
+
+        Run forward of generator with ``return_lqs=True``
+
+        Args:
+            batch_inputs (Tensor): Batch inputs.
+            data_samples (List[DataSample]): Data samples of Editing.
+                Default:None
+
+        Returns:
+            Tuple[Tensor]: Result of generator.
+                (outputs, lqs)
+        """
+
+        return self.generator(batch_inputs, return_lqs=True)
