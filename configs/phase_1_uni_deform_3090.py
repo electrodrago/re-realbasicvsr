@@ -97,8 +97,8 @@ train_pipeline = [
     dict(
         type='RandomVideoCompression',
         params=dict(
-            codec=['libx264', 'h264', 'mpeg4'],
-            codec_prob=[1 / 3., 1 / 3., 1 / 3.],
+            codec=['h264'],
+            codec_prob=[1 / 3.],
             bitrate=[1e4, 1e5]),
         keys=['img'],
     ),
@@ -160,8 +160,8 @@ train_pipeline = [
             dict(
                 type='RandomVideoCompression',
                 params=dict(
-                    codec=['libx264', 'h264', 'mpeg4'],
-                    codec_prob=[1 / 3., 1 / 3., 1 / 3.],
+                    codec=['h264'],
+                    codec_prob=[1 / 3.],
                     bitrate=[1e4, 1e5]),
                 keys=['img'],
             ),
@@ -201,7 +201,7 @@ data_root = 'data'
 
 train_dataloader = dict(
     num_workers=12,
-    batch_size=4,
+    batch_size=3,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
