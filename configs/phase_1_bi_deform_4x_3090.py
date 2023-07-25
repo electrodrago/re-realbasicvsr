@@ -184,7 +184,7 @@ demo_pipeline = [
 data_root = 'data'
 
 train_dataloader = dict(
-    num_workers=16,
+    num_workers=14,
     batch_size=8,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
