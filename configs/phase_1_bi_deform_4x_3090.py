@@ -95,14 +95,6 @@ train_pipeline = [
         keys=['img'],
     ),
     dict(
-        type='RandomVideoCompression',
-        params=dict(
-            codec=['libx264', 'h264', 'mpeg4'],
-            codec_prob=[1 / 3., 1 / 3., 1 / 3.],
-            bitrate=[1e4, 1e5]),
-        keys=['img'],
-    ),
-    dict(
         type='RandomBlur',
         params=dict(
             prob=0.8,
@@ -157,14 +149,6 @@ train_pipeline = [
     dict(
         type='DegradationsWithShuffle',
         degradations=[
-            dict(
-                type='RandomVideoCompression',
-                params=dict(
-                    codec=['libx264', 'h264', 'mpeg4'],
-                    codec_prob=[1 / 3., 1 / 3., 1 / 3.],
-                    bitrate=[1e4, 1e5]),
-                keys=['img'],
-            ),
             [
                 dict(
                     type='RandomResize',
