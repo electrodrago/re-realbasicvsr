@@ -13,7 +13,7 @@ model = dict(
         type='Re_RealBasicVSRNet',
         mid_channels=64, 
         num_blocks=12,
-        num_cleaning_blocks=12,
+        num_cleaning_blocks=15,
         max_residue_magnitude=10,
         spynet_pretrained='/workspace/re-realbasicvsr/spynet.pth'),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
@@ -228,7 +228,7 @@ optim_wrapper = dict(
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
-        interval=5000,
+        interval=1000,
         save_optimizer=True,
         out_dir=save_dir,
         max_keep_ckpts=100,
