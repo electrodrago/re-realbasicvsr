@@ -54,7 +54,7 @@ class Re_RealBasicVSRNet(BaseModule):
         # Reconstruction
         self.reconstruction = nn.Conv2d(3 * mid_channels, mid_channels, 3, 1, 1, bias=True)
 
-        self.aggr_attn = GrowthAttentionResidualBlock(num_blocks=3)
+        self.aggr_attn = GrowthAttentionResidualBlock(num_blocks=1)
 
         self.upsample1 = PixelShufflePack(
             mid_channels, mid_channels, 2, upsample_kernel=3)
@@ -145,14 +145,14 @@ class Re_RealBasicVSRNet(BaseModule):
 
         return feats
 
-    def upsample(self, lqs, feats):
+    def upsample(self, lqs_clean, feats):
         outputs = []
         num_outputs = len(feats['spatial'])
 
         mapping_idx = list(range(0, num_outputs))
         mapping_idx += mapping_idx[::-1]
 
-        for i in range(0, lqs.size(1)):
+        for i in range(0, lqs_clean.size(1)):
             hr = [feats[k].pop(0) for k in feats if k != 'spatial']
             hr.insert(0, feats['spatial'][mapping_idx[i]])
             hr = torch.cat(hr, dim=1)
@@ -163,7 +163,7 @@ class Re_RealBasicVSRNet(BaseModule):
             hr = self.lrelu(self.upsample2(hr))
             hr = self.lrelu(self.conv_hr(hr))
             hr = self.conv_last(hr)
-            hr += self.img_upsample(lqs[:, i, :, :, :])
+            hr += self.img_upsample(lqs_clean[:, i, :, :, :])
             outputs.append(hr)
 
         return torch.stack(outputs, dim=1)
@@ -208,9 +208,9 @@ class Re_RealBasicVSRNet(BaseModule):
 
             feats = self.propagate(feats, flows, direction)
         if return_lqs:
-            return self.upsample(lqs, feats), lqs_clean
+            return self.upsample(lqs_clean, feats), lqs_clean
         else:
-            return self.upsample(lqs, feats)
+            return self.upsample(lqs_clean, feats)
 
 
 class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
@@ -445,15 +445,16 @@ class GrowthAttentionResidualBlock(BaseModule):
         growth_channels (int): Channels for each growth. Default: 32.
     """
 
-    def __init__(self, mid_channels=64, growth_channels=32, num_blocks=5):
+    def __init__(self, mid_channels=64, growth_channels=32, num_blocks=3):
         super().__init__()
 
-        for i in range(5):
-            out_channels = mid_channels if i == 4 else growth_channels
+        for i in range(3):
+            out_channels = mid_channels if i == 2 else growth_channels
             # Growth block convolution
             self.add_module(
                 f'block{i+1}',
                 ResidualBlocksWithInputConv(mid_channels + i * growth_channels, out_channels, num_blocks))
+            if i == 2: break
             # Growth attention
             self.add_module(
                 f'attn{i+1}',
@@ -471,10 +472,8 @@ class GrowthAttentionResidualBlock(BaseModule):
         Returns:
             Tensor: Forward results.
         """
-        x1 = self.lrelu(self.attn1(self.block1(x)))
-        x2 = self.lrelu(self.attn2(self.block2(torch.cat((x, x1), 1))))
-        x3 = self.lrelu(self.attn3(self.block3(torch.cat((x, x1, x2), 1))))
-        x4 = self.lrelu(self.attn4(self.block4(torch.cat((x, x1, x2, x3), 1))))
-        x5 = self.attn5(self.block5(torch.cat((x, x1, x2, x3, x4), 1)))
+        x1 = self.lrelu(self.attn1(self.lrelu(self.block1(x))))
+        x2 = self.lrelu(self.attn2(self.lrelu(self.block2(torch.cat((x, x1), 1)))))
+        x3 = self.lrelu(self.block3(torch.cat((x, x1, x2), 1)))
 
-        return x5 * 0.2 + x
+        return x3 * 0.2 + x
