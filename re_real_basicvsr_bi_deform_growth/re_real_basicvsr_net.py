@@ -474,6 +474,6 @@ class GrowthAttentionResidualBlock(BaseModule):
         """
         x1 = self.lrelu(self.attn1(self.lrelu(self.block1(x))))
         x2 = self.lrelu(self.attn2(self.lrelu(self.block2(torch.cat((x, x1), 1)))))
-        x3 = self.lrelu(self.block3(torch.cat((x, x1, x2), 1)))
+        x3 = self.block3(torch.cat((x, x1, x2), 1))
 
         return x3 * 0.2 + x
