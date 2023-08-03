@@ -12,7 +12,7 @@ model = dict(
     generator=dict(
         type='Re_RealBasicVSRNet',
         mid_channels=64, 
-        num_blocks=15,
+        num_blocks=12,
         num_cleaning_blocks=15,
         max_residue_magnitude=10,
         spynet_pretrained='/content/re-realbasicvsr/spynet.pth'),
@@ -210,7 +210,7 @@ train_dataloader = dict(
         data_root="/content/drive/MyDrive/1THESIS/train",
         data_prefix=dict(img='train_sharp_bicubic/X4', gt='train_sharp'),
         depth=1,
-        num_input_frames=12,
+        num_input_frames=10,
         pipeline=train_pipeline))
 
 train_cfg = dict(

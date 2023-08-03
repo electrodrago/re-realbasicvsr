@@ -54,7 +54,7 @@ class Re_RealBasicVSRNet(BaseModule):
         # Reconstruction
         self.reconstruction = nn.Conv2d(3 * mid_channels, mid_channels, 3, 1, 1, bias=True)
 
-        self.aggr_attn = GrowthAttentionResidualBlock(num_blocks=1)
+        self.aggr_attn = GrowthAttentionResidualBlock(num_blocks=3)
 
         self.upsample1 = PixelShufflePack(
             mid_channels, mid_channels, 2, upsample_kernel=3)
