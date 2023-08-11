@@ -74,6 +74,14 @@ class Re_RealBasicVSRNet(BaseModule):
             nn.Conv2d(mid_channels, 3, 3, 1, 1, bias=True),
         )
 
+        # Another upsample flow
+        self.img_upsample_raw = nn.Upsample(
+            scale_factor=2, mode='nearest', align_corners=False)
+        self.upsample_raw = PixelShufflePack(
+            mid_channels // 8, mid_channels // 8, 2, upsample_kernel=3)
+        self.conv_hr_raw = nn.Conv2d(mid_channels // 8, mid_channels // 8, 3, 1, 1)
+        self.conv_last_raw = nn.Conv2d(mid_channels // 8, 3, 3, 1, 1)
+
         self.spynet.requires_grad_(False)
 
     def compute_flow(self, lqs):
@@ -163,8 +171,14 @@ class Re_RealBasicVSRNet(BaseModule):
             hr = self.lrelu(self.upsample2(hr))
             hr = self.lrelu(self.conv_hr(hr))
             hr = self.conv_last(hr)
+
+            hr_raw = feat_raw[:, i, :, :, :]
+            hr_raw = self.img_upsample_raw(hr_raw)
+            hr_raw = self.lrelu(self.upsample_raw(hr_raw))
+            hr_raw = self.lrelu(self.conv_hr_raw(hr_raw))
+            hr_raw = self.conv_last_raw(hr_raw)
             
-            hr += self.img_upsample(lqs_clean[:, i, :, :, :])
+            hr += self.img_upsample(lqs_clean[:, i, :, :, :]) + 0.2 * hr_raw
             outputs.append(hr)
 
         return torch.stack(outputs, dim=1)
@@ -189,7 +203,7 @@ class Re_RealBasicVSRNet(BaseModule):
         feat_raw = self.feat_extract(lqs.view(-1, c, h, w))
         feat_clean = self.feat_extract_clean(lqs_clean.view(-1, c, h, w))
 
-        feat_raw = feat.view(n, t, -1, h, w)
+        feat_raw = feat_raw.view(n, t, -1, h, w)
         feat_clean = feat_clean.view(n, t, -1, h, w)
         feats_ = torch.cat([feat_raw, feat_clean], dim=2)
 
@@ -209,9 +223,9 @@ class Re_RealBasicVSRNet(BaseModule):
 
             feats = self.propagate(feats, flows, direction)
         if return_lqs:
-            return self.upsample(lqs_clean, feats), lqs_clean
+            return self.upsample(lqs_clean, feats, feat_raw), lqs_clean
         else:
-            return self.upsample(lqs_clean, feats)
+            return self.upsample(lqs_clean, feats, feat_raw)
 
 
 class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
