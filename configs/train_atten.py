@@ -197,7 +197,7 @@ data_root = 'data'
 
 train_dataloader = dict(
     num_workers=2,
-    batch_size=8,
+    batch_size=2,
     persistent_workers=False,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
@@ -224,13 +224,13 @@ optim_wrapper = dict(
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
-        interval=5000,
+        interval=1000,
         save_optimizer=True,
         out_dir=save_dir,
         max_keep_ckpts=100,
         by_epoch=False),
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=10),
+    logger=dict(type='LoggerHook', interval=1),
     param_scheduler=dict(type='ParamSchedulerHook'),
     sampler_seed=dict(type='DistSamplerSeedHook'),
 )
