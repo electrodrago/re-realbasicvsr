@@ -107,16 +107,16 @@ class FuseUpsampling(nn.Module):
     def forward(self, lq_clean, lq_raw):
         # Case: nearest x4 | bilinear x4 | nearest x2, bilinear x2 | bilinear x2, nearest x2
 
-        # Case here: nearest x2, bilinear x2
-        hr_clean = self.nearest_x2(lq_clean)
-        hr_raw = self.nearest_x2(lq_raw)
+        # # Case here: nearest x2, bilinear x2
+        # hr_clean = self.nearest_x2(lq_clean)
+        # hr_raw = self.nearest_x2(lq_raw)
 
-        hr_clean = self.linear_x2(hr_clean)
-        hr_raw = self.linear_x2(hr_raw)
+        # hr_clean = self.linear_x2(hr_clean)
+        # hr_raw = self.linear_x2(hr_raw)
 
-        # # Case here: nearest x4
-        # hr_clean = self.nearest_x4(lq_clean)
-        # hr_raw = self.nearest_x4(lq_raw)
+        # Case here: nearest x4
+        hr_clean = self.nearest_x4(lq_clean)
+        hr_raw = self.nearest_x4(lq_raw)
 
         # # Case here: bilinear x4
         # hr_clean = self.linear_x4(lq_clean)

@@ -1,6 +1,6 @@
 _base_ = 'default_runtime.py'
 
-experiment_name = 'nearest_x2_linear_x2'
+experiment_name = 'nearest_x4'
 work_dir = f'/content/drive/MyDrive/1THESIS/fuse_upsampling/{experiment_name}'
 save_dir = '/content/drive/MyDrive/1THESIS/fuse_upsampling/'
 
@@ -210,7 +210,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=300000)
+    type='IterBasedTrainLoop', max_iters=2000)
 
 # optimizer
 optim_wrapper = dict(
@@ -230,7 +230,7 @@ default_hooks = dict(
         max_keep_ckpts=100,
         by_epoch=False),
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=1),
+    logger=dict(type='LoggerHook', interval=10),
     param_scheduler=dict(type='ParamSchedulerHook'),
     sampler_seed=dict(type='DistSamplerSeedHook'),
 )
