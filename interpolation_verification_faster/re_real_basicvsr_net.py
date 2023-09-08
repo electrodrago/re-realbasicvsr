@@ -114,13 +114,13 @@ class FuseUpsampling(nn.Module):
         # hr_clean = self.linear_x2(hr_clean)
         # hr_raw = self.linear_x2(hr_raw)
 
-        # Case here: nearest x4
-        hr_clean = self.nearest_x4(lq_clean)
-        hr_raw = self.nearest_x4(lq_raw)
+        # # Case here: nearest x4
+        # hr_clean = self.nearest_x4(lq_clean)
+        # hr_raw = self.nearest_x4(lq_raw)
 
-        # # Case here: bilinear x4
-        # hr_clean = self.linear_x4(lq_clean)
-        # hr_raw = self.linear_x4(lq_raw)
+        # Case here: bilinear x4
+        hr_clean = self.linear_x4(lq_clean)
+        hr_raw = self.linear_x4(lq_raw)
 
         hr_raw = self.conv1(hr_raw)
 
@@ -147,7 +147,7 @@ class Re_RealBasicVSRNet(BaseModule):
 
         self.image_cleaning.requires_grad_(False)
 
-        self.fuse_upsampling = FuseUpsampling(3, 3, num_heads=3)
+        self.fuse_upsampling = FuseUpsampling(6)
 
     def upsample(self, lqs_clean, lqs_raw):
         outputs = []
