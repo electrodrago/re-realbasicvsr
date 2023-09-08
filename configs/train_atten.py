@@ -1,6 +1,6 @@
 _base_ = 'default_runtime.py'
 
-experiment_name = 'bilinear_x4'
+experiment_name = 'bilinear_x4_clean'
 work_dir = f'/content/drive/MyDrive/1THESIS/fuse_upsampling/{experiment_name}'
 save_dir = '/content/drive/MyDrive/1THESIS/fuse_upsampling/'
 

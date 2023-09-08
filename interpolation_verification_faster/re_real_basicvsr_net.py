@@ -118,9 +118,9 @@ class FuseUpsampling(nn.Module):
         # hr_clean = self.nearest_x4(lq_clean)
         # hr_raw = self.nearest_x4(lq_raw)
 
-        # Case here: bilinear x4
+        # Case here: bilinear x4 for hr clean, nearest x4 for raw
         hr_clean = self.linear_x4(lq_clean)
-        hr_raw = self.linear_x4(lq_raw)
+        hr_raw = self.nearest_x4(lq_raw)
 
         hr_raw = self.conv1(hr_raw)
 
