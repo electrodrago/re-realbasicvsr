@@ -72,6 +72,7 @@ class Re_RealBasicVSRNet(BaseModule):
         )
 
         self.spynet.requires_grad_(False)
+        self.image_cleaning.requires_grad_(False)
 
     def compute_flow(self, lqs):
         n, t, c, h, w = lqs.size()
