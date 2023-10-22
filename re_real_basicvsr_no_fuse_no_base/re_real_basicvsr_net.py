@@ -159,7 +159,7 @@ class Re_RealBasicVSRNet(BaseModule):
             hr = self.lrelu(self.upsample1(hr))
             hr = self.lrelu(self.upsample2(hr))
             hr = self.lrelu(self.conv_hr(hr))
-            hr = self.conv_last(hr)
+            hr = self.conv_last(hr) * 10.
             #hr += self.img_upsample(lqs_clean[:, i, :, :, :])
             outputs.append(hr)
 
