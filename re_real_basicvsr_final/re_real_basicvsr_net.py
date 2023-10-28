@@ -447,7 +447,7 @@ class FuseUpsampling(nn.Module):
 
     def forward(self, lq_clean, lq_raw):
         hr_clean = self.linear_x4(lq_clean)
-        hr_raw = self.nearest_x4(lq_raw)
+        hr_raw = self.linear_x4(lq_raw)
 
         hr_raw = self.lrelu(self.conv1(hr_raw))
 
