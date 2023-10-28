@@ -443,7 +443,6 @@ class FuseUpsampling(nn.Module):
         self.fuse_attn = LargeKernelAttn(channels)
 
         self.linear_x4 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False)
-        self.nearest_x4 = nn.Upsample(scale_factor=4, mode='nearest')
 
     def forward(self, lq_clean, lq_raw):
         hr_clean = self.linear_x4(lq_clean)
