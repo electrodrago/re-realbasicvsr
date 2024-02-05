@@ -46,7 +46,7 @@ test_dataloader = dict(
         type='BasicFramesDataset',
         metainfo=dict(dataset_type='reds', task_name='vsr'),
         data_root= '/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4',
-        data_prefix=dict(img='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/LR', gt='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/HR'),
+        data_prefix=dict(img='/content/drive/MyDrive/VSR_DTS/REDS_3_frames/LR', gt='/content/drive/MyDrive/VSR_DTS/REDS_3_frames/HR'),
         pipeline=test_pipeline))
 
 
