@@ -50,7 +50,7 @@ test_dataloader = dict(
         type='BasicFramesDataset',
         metainfo=dict(dataset_type='reds', task_name='vsr'),
         data_root= '/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4',
-        data_prefix=dict(img='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/LR', gt='/content/drive/MyDrive/1THESIS/VSR_DTS/REDS4/HR'),
+        data_prefix=dict(img='/content/LR', gt='/content/HR'),
         pipeline=test_pipeline))
 
 
