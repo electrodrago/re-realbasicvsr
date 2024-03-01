@@ -205,9 +205,9 @@ class RealCleanVSRNet(BaseModule):
         feat_raw = self.raw_encoder(lqs_raw.view(-1, c, h, w))
         feat_cleaned = self.cleaned_encoder(lqs_cleaned.view(-1, c, h, w))
 
-        feat = feat.view(n, t, -1, h, w)
+        feat_raw = feat_raw.view(n, t, -1, h, w)
         feat_cleaned = feat_cleaned.view(n, t, -1, h, w)
-        feats_ = torch.cat([feat, feat_cleaned], dim=2)
+        feats_ = torch.cat([feat_raw, feat_cleaned], dim=2)
 
         feats = {}
         feats['spatial'] = [feats_[:, i, :, :, :] for i in range(0, t)]
